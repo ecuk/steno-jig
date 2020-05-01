@@ -87,7 +87,7 @@ window.onload = function() {
 		hints = new StenoDisplay(strokes, translations, true);
 	}
 
-	let words = [], sentence, i
+	let words = [], sentence
 	let chars_left = word_count * 5
 	let top_n_bucket = window.sentences_by_top_100[top_n / 100 - 1]
 	while (chars_left > 0) {
