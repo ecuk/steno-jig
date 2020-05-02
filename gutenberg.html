@@ -1,112 +1,129 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta charset="utf-8">
-	<title>Steno Jig</title>
-	<link href="style.css" rel="stylesheet" type="text/css">
-	<script src="type-jig.js"></script>
-	<script src="util.js"></script>
-	<script src="steno-display.js"></script>
-	<script src="plover-translations.js"></script>
-	<script src="gutenberg.js"></script>
-	<link rel="stylesheet" type="text/css" href="font-roboto.css">
-</head>
-<body>
+  <head>
+    <meta charset="utf-8">
+    <title>Steno Jig</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <script src="type-jig.js"></script>
+    <script src="util.js"></script>
+    <script src="steno-display.js"></script>
+    <script src="plover-translations.js"></script>
+    <script src="gutenberg.js"></script>
+    <link rel="stylesheet" type="text/css" href="font-roboto.css">
+  </head>
+  <body>
 
-<div id="lesson" class="wrapper">
-	<h3 id="lesson-name" class="center"></h3>
-	<div id="drill-content">
-		<div id="answer"></div>
-		<div id="exercise"></div>
-	</div>
+    <div id="lesson" class="wrapper">
+      <h3 id="lesson-name" class="center"></h3>
+      <div id="drill-content">
+        <div id="answer"></div>
+        <div id="exercise"></div>
+      </div>
 
-	<div id="nav">
-		<p id="strokes"></p>
-		<p id="clock" class="clock"></p>
-		<p class="center"><a id="back" title="LeftArrow">&larr; Back to Menu <span class="shortcutkey">(LeftArrow)</span></a></p>
-		<p class="center"><a id="again" title="Enter">&#8634; Repeat Drill <span class="shortcutkey">(Enter)</span></a></p>
-		<p class="center"><a id="new" title="RightArrow">&rarr; New Drill <span class="shortcutkey">(RightArrow)</span></a></p>
-	</div>
+      <div id="nav">
+        <p id="strokes"></p>
+        <p id="clock" class="clock"></p>
+        <p class="center"><a id="back" title="LeftArrow">&larr; Back to Menu <span class="shortcutkey">(LeftArrow)</span></a></p>
+        <p class="center"><a id="again" title="Enter">&#8634; Repeat Drill <span class="shortcutkey">(Enter)</span></a></p>
+        <p class="center"><a id="new" title="RightArrow">&rarr; New Drill <span class="shortcutkey">(RightArrow)</span></a></p>
+      </div>
 
-	<textarea id="input"></textarea>
-</div>
+      <textarea id="input"></textarea>
+    </div>
 
-<script>
-function new_rng(seed_txt) {
-	var s, i, j, tmp
-	s = new Array(256);
-	for (i = 0; i < 256; ++i) {
-		s[i] = i;
-	}
-	if (seed_txt == null) {
-		seed_txt = Math.random().toString()
-	}
-	for (i = j = 0; i < 256; ++i) {
-		j += s[i] + seed_txt.charCodeAt(i % seed_txt.length);
-		j %= 256;
-		tmp = s[i]; s[i] = s[j]; s[j] = tmp;
-	}
-	return function() {
-		var p, ret = 0
-		for (p = 0; p < 7; ++p) {
-			ret *= 256
-			i = (i + 1) % 256;
-			j = (j + s[i]) % 256;
-			tmp = s[i]; s[i] = s[j]; s[j] = tmp;
-			ret += s[(s[i] + s[j]) % 256];
-		}
-		return ret / 72057594037927935.0
-	}
-}
-window.onload = function() {
-	var fields = parseQueryString(document.location.search)
+    <script>
+      function new_rng(seed_txt) {
+          var s, i, j, tmp
+          s = new Array(256);
+          for (i = 0; i < 256; ++i) {
+              s[i] = i;
+          }
+          if (seed_txt == null) {
+              seed_txt = Math.random().toString()
+          }
+          for (i = j = 0; i < 256; ++i) {
+              j += s[i] + seed_txt.charCodeAt(i % seed_txt.length);
+              j %= 256;
+              tmp = s[i]; s[i] = s[j]; s[j] = tmp;
+          }
+          return function() {
+              var p, ret = 0
+              for (p = 0; p < 7; ++p) {
+                  ret *= 256
+                  i = (i + 1) % 256;
+                  j = (j + s[i]) % 256;
+                  tmp = s[i]; s[i] = s[j]; s[j] = tmp;
+                  ret += s[(s[i] + s[j]) % 256];
+              }
+              return ret / 72057594037927935.0
+          }
+      }
+      window.onload = function() {
+          var fields = parseQueryString(document.location.search)
 
-	var rng = new_rng(fields.seed)
+          var rng = new_rng(fields.seed)
 
-	var top_n = fields.top == null ? 100 : parseInt(fields.top)
-	// round up
-	top_n = Math.floor((top_n + 99) / 100) * 100
-	if (top_n < 100) {
-		top_n = 100
-	}
-	if (top_n > 8000) {
-		top_n = 8000
-	}
+          var top_n = fields.top == null ? 100 : parseInt(fields.top)
+          // round up
+          top_n = Math.floor((top_n + 99) / 100) * 100
+          if (top_n < 100) {
+              top_n = 100
+          }
+          if (top_n > 8000) {
+              top_n = 8000
+          }
 
-	var word_count = fields.word_count == null ? 100 : parseInt(fields.word_count)
+          var word_count = fields.word_count == null ? 100 : parseInt(fields.word_count)
 
-	var name = "Sentences from Project Gutenberg that contain only the top " + top_n + " words.";
-	var hints = null;
+          var name = "Sentences from Project Gutenberg that contain only the top " + top_n + " words.";
+          var hints = null;
 
-	if(fields.hints) {
-		var strokes = document.getElementById('strokes');
-		if(fields.floating_hints) {
-			strokes.style.position = 'fixed';
-		}
-		var translations = TypeJig.shortestTranslations(TypeJig.Translations.Plover);
-		hints = new StenoDisplay(strokes, translations, true);
-	}
+          if (fields.hints) {
+              var strokes = document.getElementById('strokes');
+              if(fields.floating_hints) {
+                  strokes.style.position = 'fixed';
+              }
+              var translations = TypeJig.shortestTranslations(TypeJig.Translations.Plover);
+              hints = new StenoDisplay(strokes, translations, true);
+          }
 
-	let words = [], sentence
-	let chars_left = word_count * 5
-	let top_n_bucket = window.sentences_by_top_100[top_n / 100 - 1]
-	while (chars_left > 0) {
-		sentence = top_n_bucket[Math.floor(rng() * top_n_bucket.length)]
-		chars_left -= sentence.length
-		words.splice(0, 0, ...sentence.split(' '))
-	}
+          let words = [], sentence
+          let chars_left = word_count * 5
 
-	var exercise = new TypeJig.Exercise(words, 0, false, 'ordered');
+          if (fields.cumulative) {
+              let num_bins = top_n / 100 - 1;
+              while (chars_left > 0) {
+                  let rnum = rng();
+                  if (fields.weighted) {
+                      rnum = rnum ** Math.E;
+                  }
+                  let bin = Math.floor(rnum * num_bins);
+                  let sentences = window.sentences_by_top_100[bin];
+                  sentence = sentences[Math.floor(rng() * sentences.length)];
+                  chars_left -= sentence.length
+                  words.splice(0, 0, ...sentence.split(' '))
+              }
+          }
+          else {
+              let top_n_bucket = window.sentences_by_top_100[top_n / 100 - 1]
+              while (chars_left > 0) {
+                  sentence = top_n_bucket[Math.floor(rng() * top_n_bucket.length)]
+                  chars_left -= sentence.length
+                  words.splice(0, 0, ...sentence.split(' '))
+              }
+          }
 
-	var new_drill = document.getElementById('new');
-	new_drill.href = document.location.href.toString().replace(/seed=([^&#]*)/, 'seed=' + Math.random().toString());
+          var exercise = new TypeJig.Exercise(words, 0, false, 'ordered');
 
-	setExercise(name, exercise, hints);
-	back.href = back.href.replace('gutenberg', 'form');
-}
+          var new_drill = document.getElementById('new');
+          new_drill.href = document.location.href.toString().replace(/seed=([^&#]*)/, 'seed=' + Math.random().toString());
 
-setTheme()
-</script>
+          setExercise(name, exercise, hints);
+          back.href = back.href.replace('gutenberg', 'form');
+      }
 
-</body>
+      setTheme()
+    </script>
+
+  </body>
 </html>
