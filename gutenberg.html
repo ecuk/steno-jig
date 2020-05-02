@@ -87,8 +87,9 @@
               hints = new StenoDisplay(strokes, translations, true);
           }
 
-          let words = [], sentence
-          let chars_left = word_count * 5
+          let words = [];
+          let sentence = "";
+          let chars_left = word_count * 5;
 
           if (fields.cumulative) {
               let num_bins = top_n / 100 - 1;
@@ -100,16 +101,16 @@
                   let bin = Math.floor(rnum * num_bins);
                   let sentences = window.sentences_by_top_100[bin];
                   sentence = sentences[Math.floor(rng() * sentences.length)];
-                  chars_left -= sentence.length
-                  words.splice(0, 0, ...sentence.split(' '))
+                  chars_left -= sentence.length;
+                  words.splice(0, 0, ...sentence.split(' '));
               }
           }
           else {
-              let top_n_bucket = window.sentences_by_top_100[top_n / 100 - 1]
+              let top_n_bucket = window.sentences_by_top_100[top_n / 100 - 1];
               while (chars_left > 0) {
-                  sentence = top_n_bucket[Math.floor(rng() * top_n_bucket.length)]
-                  chars_left -= sentence.length
-                  words.splice(0, 0, ...sentence.split(' '))
+                  sentence = top_n_bucket[Math.floor(rng() * top_n_bucket.length)];
+                  chars_left -= sentence.length;
+                  words.splice(0, 0, ...sentence.split(' '));
               }
           }
 
