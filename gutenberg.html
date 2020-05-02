@@ -96,7 +96,7 @@
               while (chars_left > 0) {
                   let rnum = rng();
                   if (fields.weighted) {
-                      rnum = rnum ** Math.E;
+                      rnum = 1 - (rnum ** Math.E);
                   }
                   let bin = Math.floor(rnum * num_bins);
                   let sentences = window.sentences_by_top_100[bin];
